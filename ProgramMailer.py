@@ -29,61 +29,106 @@ def main():
     # <precis>yyyyy</precis>
 
     # Markup is a dict keyed by the <name></name> with contents the contained markup and rooted at "main"
-    markup: list[tuple[str, str|list]]=resolve([("Main", markuplines)])
+    main=Node("Main", markuplines).Resolve()
 
     # Now we have the whole schmeer in a hierarchical structure
     # Generate the output
     with open("Program participant schedules email.txt", "w") as file:
-        main=markup[0][1]
         for person in main:
             fullname=""
             email=""
             items=""
-            for attribute in person[0][1]:
-                if attribute[0][0] == "email":
-                    email=attribute[0][1]
-                if attribute[0][0] == "fullname":
-                    fullname=attribute[0][1]
-                if attribute[0][0] == "item":
+            for attribute in person.List:
+                if attribute.Key == "email":
+                    email=attribute.Text
+                    continue
+                if attribute.Key == "fullname":
+                    fullname=attribute.Text
+                    continue
+                if attribute.Key == "item":
                     title=""
                     participants=""
                     precis=""
-                    for subatt in attribute[0][1]:
-                        if subatt[0][0] == "title":
-                            title=subatt[0][1]
-                        if subatt[0][0] == "participants":
-                            participants=subatt[0][1]
-                        if subatt[0][0] == "precis":
-                            precis=subatt[0][1]
+                    for subatt in attribute.List:
+                        if subatt.Key == "title":
+                            title=subatt.Text
+                        if subatt.Key == "participants":
+                            participants=subatt.Text
+                        if subatt.Key == "precis":
+                            precis=subatt.Text
                     item=f"{title}\n{participants}\n"
                     if len(precis) > 0:
                         item+=f"{precis}\n"
                     items=items+item+"\n"
+                    continue
             print(f"\n\n\nDear {fullname}\n{email}\n\nHere's yer schedule:\n{items}", file=file)
 
 
-# Recursively parse the markup
-def resolve(markup: list[tuple[str, str]]) -> list[tuple[str, list[tuple[str, str]]]]:
-    # Replace the list of strings with a list of dicts for each xxx and then call resolve for each of those
-    # Find the first (perhaps only) markup in the list of strings
+class Node():
+    def __init__(self, key: str, value: str|list[Node]=""):
+        self._key=key
 
-    assert len(markup) == 1
-    key=markup[0][0]
-    text=markup[0][1]
-    out=[]
-    while len(text) > 0:
-        lead, bracket, contents, trail=FindAnyBracketedText(text)
-        if bracket == "" and contents == "":
-            if trail != "":
-                # print(f"[({key}, {trail})]")
-                return [(key, trail)]
-            if trail == "":
-                break
-        out.append(resolve([(bracket, contents)]))
-        text=trail
+        if type(value) == str:
+            self._value=value
+            return
+        if type(value) == list:
+            self._value=value
+            return
 
-    # print(f"[({key}, {len(out)=})]")
-    return [(key, out)]
+        assert False
+
+
+    def __len__(self) -> int:
+        assert type(self._value) != Node
+        return len(self._value)
+
+    def __getitem__(self, i: int):
+        return self._value[i]
+
+    @property
+    def IsText(self) -> bool:
+        return type(self._value) == str
+
+    @property
+    def Key(self) -> str:
+        return self._key
+
+    @property
+    def List(self) -> list[Node]:
+        if type(self._value) == list:
+            return self._value
+        return []
+    
+    @property
+    def Text(self) -> str:
+        if type(self._value) == str:
+            return self._value
+        return ""
+
+    # Recursively parse the markup
+    def Resolve(self) -> Node:
+        # Replace the list of strings with a list of dicts for each xxx and then call resolve for each of those
+        # Find the first (perhaps only) markup in the list of strings
+
+        key=self._key
+        text=self._value
+
+        out: list[Node]=[]
+        while len(text) > 0:
+            lead, bracket, contents, trail=FindAnyBracketedText(text)
+            if bracket == "" and contents == "":
+                if trail != "":
+                    print(f"[({key}, {trail})]")
+                    self._value=trail
+                    return self
+                if trail == "":
+                    break
+            out.append(Node(bracket, contents).Resolve())
+            text=trail
+
+        print(f"[({key}, {len(out)=})]")
+        self._value=out
+        return self
 
 
 if __name__ == "__main__":
