@@ -1,134 +1,68 @@
 from __future__ import annotations
+from typing import Optional
 
-from HelpersPackage import FindAnyBracketedText
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+from HelpersPackage import FindAnyBracketedText, MessageBox
 
 def main():
 
-    # Open the schedule markup file
-    markuplines=""
-    with open("../ProgramAnalyzer/reports/Program participant schedules markup.txt", "r") as file:
-        markuplines=file.read()
-    # Remove newlines *outside* markup
-    markuplines=markuplines.replace(">\n<", "><")
+    # Open the mail file which was created using ProgramMailerAssembler
+    allEmails=""
+    with open("../ProgramAnalyzer/reports/Program participant schedules email.txt", "r") as file:
+        allEmails=file.read()
 
-    # <person>xxxx</person>
-    # <person>xxxx</person>
-    # <person>xxxx</person>
+    # This file contains one or more emails.
+    # An individual email is structures as:
+    #   <email>
+    #       <email-address>email address to mail to</email-address>
+    #       <content>
+    #           blah, blah, blah
+    #       </content>
+    #   </email>
+    #
+    # Indents are for clarity only
+    # Newlines within the content are preserved
+    # Lines beginning with "#" *outside* of the <email> blocks are ignored
 
-    # Each xxxx is:
-    # <fullname>fffff</fullname>
-    # <email>eeeee</email>
-    # <item>iiii</item>
-    # <item>iiii</item>
-    # <item>iiii</item>
-    # <item>iiii</item>
-
-    # Each item is:
-    # <title>ttt</title>
-    # <participants>pppp</participants>
-    # <precis>yyyyy</precis>
-
-    # Markup is a dict keyed by the <name></name> with contents the contained markup and rooted at "main"
-    main=Node("Main", markuplines).Resolve()
-
-    # Now we have the whole schmeer in a hierarchical structure
-    # Generate the output
-    with open("Program participant schedules email.txt", "w") as file:
-        for person in main:
-            fullname=""
-            email=""
-            items=""
-            for attribute in person.List:
-                if attribute.Key == "email":
-                    email=attribute.Text
-                    continue
-                if attribute.Key == "fullname":
-                    fullname=attribute.Text
-                    continue
-                if attribute.Key == "item":
-                    title=""
-                    participants=""
-                    precis=""
-                    for subatt in attribute.List:
-                        if subatt.Key == "title":
-                            title=subatt.Text
-                        if subatt.Key == "participants":
-                            participants=subatt.Text
-                        if subatt.Key == "precis":
-                            precis=subatt.Text
-                    item=f"{title}\n{participants}\n"
-                    if len(precis) > 0:
-                        item+=f"{precis}\n"
-                    items=items+item+"\n"
-                    continue
-            print(f"\n\n\nDear {fullname}\n{email}\n\nHere's yer schedule:\n{items}", file=file)
-
-
-class Node():
-    def __init__(self, key: str, value: str|list[Node]=""):
-        self._key=key
-
-        if type(value) == str:
-            self._value=value
+    while len(allEmails) > 0:
+        _, tag, content, remainder=FindAnyBracketedText(allEmails)
+        if tag != "email":
+            MessageBox(f"Top level tag<{tag}> encounters -- <email> expected.")
             return
-        if type(value) == list:
-            self._value=value
+        allEmails=remainder.strip()
+
+        # Get the email address and message
+        _, tag1, emailaddress, remainder=FindAnyBracketedText(content)
+        if tag1 != "email-address":
+            MessageBox(f"Top level tag<{tag}> encounters -- <email-address> expected.")
+            return
+        _, tag2, message, _=FindAnyBracketedText(remainder)
+        if tag2 != "content":
+            MessageBox(f"Top level tag<{tag}> encounters -- <content> expected.")
             return
 
-        assert False
+        # sender_pass='moqwjlrbhoisqvkc'  # 'Prog3Analyzer'
+        Mail('programtest2022@gmail.com', 'moqwjlrbhoisqvkc', 'mlo@baskerville.org', "Test message", "This message is a test.")
 
 
-    def __len__(self) -> int:
-        assert type(self._value) != Node
-        return len(self._value)
-
-    def __getitem__(self, i: int):
-        return self._value[i]
-
-    @property
-    def IsText(self) -> bool:
-        return type(self._value) == str
-
-    @property
-    def Key(self) -> str:
-        return self._key
-
-    @property
-    def List(self) -> list[Node]:
-        if type(self._value) == list:
-            return self._value
-        return []
-    
-    @property
-    def Text(self) -> str:
-        if type(self._value) == str:
-            return self._value
-        return ""
-
-    # Recursively parse the markup
-    def Resolve(self) -> Node:
-        # Replace the list of strings with a list of dicts for each xxx and then call resolve for each of those
-        # Find the first (perhaps only) markup in the list of strings
-
-        key=self._key
-        text=self._value
-
-        out: list[Node]=[]
-        while len(text) > 0:
-            lead, bracket, contents, trail=FindAnyBracketedText(text)
-            if bracket == "" and contents == "":
-                if trail != "":
-                    print(f"[({key}, {trail})]")
-                    self._value=trail
-                    return self
-                if trail == "":
-                    break
-            out.append(Node(bracket, contents).Resolve())
-            text=trail
-
-        print(f"[({key}, {len(out)=})]")
-        self._value=out
-        return self
+def Mail(senderAddress: str, password: str, recipient: str, subject: str, content: str) -> None:
+    #Setup the MIME
+    message = MIMEMultipart()
+    message['From'] = senderAddress
+    message['To'] = recipient
+    message['Subject'] = subject
+    #The body and the attachments for the mail
+    message.attach(MIMEText(content, 'plain'))
+    #Create SMTP session for sending the mail
+    session = smtplib.SMTP('smtp.gmail.com', 587) #use gmail with port
+    session.starttls() #enable security
+    session.login(senderAddress, password) #login with mail_id and password
+    text = message.as_string()
+    session.sendmail(senderAddress, recipient, text)
+    session.quit()
 
 
 if __name__ == "__main__":
