@@ -47,7 +47,7 @@ def main():
             MessageLog(f"email subject tag<{tag}> missing from <email message>.")
             return
         # sender_pass='moqwjlrbhoisqvkc'  # 'Prog3Analyzer'
-        Mail('programtest2022@gmail.com', 'moqwjlrbhoisqvkc', 'mlo@baskerville.org', "Test message", "This message is a test.")
+        Mail('programtest2022@gmail.com', 'moqwjlrbhoisqvkc', 'mlo@baskerville.org', subject, body)
 
 
 def Mail(senderAddress: str, password: str, recipient: str, subject: str, content: str) -> None:
