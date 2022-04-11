@@ -4,13 +4,13 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from HelpersPackage import FindAnyBracketedText, MessageBox
+from HelpersPackage import FindAnyBracketedText, MessageLog, SelectFileBasedOnDebugger
 
 def main():
 
     # Open the mail file which was created using ProgramMailerAssembler
     allEmails=""
-    with open("../ProgramAnalyzer/reports/Program participant schedules email.txt", "r") as file:
+    with open(SelectFileBasedOnDebugger("../ProgramMailAssembler", "Program participant schedules email.txt"), "r") as file:
         allEmails=file.read()
 
     # This file contains one or more emails.
@@ -29,20 +29,23 @@ def main():
     while len(allEmails) > 0:
         _, tag, content, remainder=FindAnyBracketedText(allEmails)
         if tag != "email":
-            MessageBox(f"Top level tag<{tag}> encounters -- <email> expected.")
+            MessageLog(f"Top level tag<{tag}> encountered -- <email> expected.")
             return
         allEmails=remainder.strip()
 
         # Get the email address and message
         _, tag1, emailaddress, remainder=FindAnyBracketedText(content)
         if tag1 != "email-address":
-            MessageBox(f"Top level tag<{tag}> encounters -- <email-address> expected.")
+            MessageLog(f"Top level tag<{tag}> encountered -- <email-address> expected.")
             return
         _, tag2, message, _=FindAnyBracketedText(remainder)
         if tag2 != "content":
-            MessageBox(f"Top level tag<{tag}> encounters -- <content> expected.")
+            MessageLog(f"Top level tag<{tag}> encountered -- <content> expected.")
             return
-
+        _, tag3, subject, body=FindAnyBracketedText(message)
+        if tag3 != "email subject":
+            MessageLog(f"email subject tag<{tag}> missing from <email message>.")
+            return
         # sender_pass='moqwjlrbhoisqvkc'  # 'Prog3Analyzer'
         Mail('programtest2022@gmail.com', 'moqwjlrbhoisqvkc', 'mlo@baskerville.org', "Test message", "This message is a test.")
 
