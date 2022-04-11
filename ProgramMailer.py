@@ -28,7 +28,7 @@ def main():
 
     while len(allEmails) > 0:
         _, tag, content, remainder=FindAnyBracketedText(allEmails)
-        if tag != "email":
+        if tag != "email-message":
             MessageLog(f"Top level tag<{tag}> encountered -- <email> expected.")
             return
         allEmails=remainder.strip()
