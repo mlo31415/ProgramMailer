@@ -81,7 +81,7 @@ def Mail(returnAddress: str, senderAddress: str, password: str, mailFormat: str,
     #The body and the attachments for the mail
 
     if mailFormat.lower().strip() == "html":
-        message.attach(MIMEText(content, 'HTML'))
+        message.attach(MIMEText(content, 'html'))
     else:
         message.attach(MIMEText(content, 'plain'))
 
