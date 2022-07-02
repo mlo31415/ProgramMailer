@@ -39,6 +39,15 @@ def main():
     # Newlines within the content are preserved
     # Lines beginning with "#" *outside* of the <email> blocks are ignored
 
+    returnAddress=parameters["ReturnAddress"]
+    if not returnAddress:
+        MessageLog(f"Can't find ReturnAddress value in parameters.txt\nProgramMailer terminated.")
+        exit(999)
+    mailFormat=parameters["MailFormat"]
+    if not mailFormat:
+        MessageLog(f"Can't find MailFormat value in parameters.txt\nProgramMailer terminated.")
+        exit(999)
+
     while len(allEmails) > 0:
         _, tag, content, remainder=FindAnyBracketedText(allEmails)
         if tag != "email-message":
