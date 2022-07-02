@@ -69,17 +69,22 @@ def main():
             MessageLog(f"email subject tag<{tag}> missing from <email message>.\nProgramMailer ended.")
             return
         # sender_pass='moqwjlrbhoisqvkc'  # 'Prog3Analyzer'
-        Mail('programtest2022@gmail.com', 'moqwjlrbhoisqvkc', emailaddress, subject, body)
+        Mail(returnAddress, 'programtest2022@gmail.com', 'moqwjlrbhoisqvkc', mailFormat, emailaddress, subject, body)
 
 
-def Mail(senderAddress: str, password: str, recipient: str, subject: str, content: str) -> None:
+def Mail(returnAddress: str, senderAddress: str, password: str, mailFormat: str, recipient: str, subject: str, content: str) -> None:
     #Setup the MIME
     message = MIMEMultipart()
-    message['From'] = senderAddress
+    message['From'] = returnAddress
     message['To'] = recipient
     message['Subject'] = subject
     #The body and the attachments for the mail
-    message.attach(MIMEText(content, 'plain'))
+
+    if mailFormat.lower().strip() == "html":
+        message.attach(MIMEText(content, 'HTML'))
+    else:
+        message.attach(MIMEText(content, 'plain'))
+
     #Create SMTP session for sending the mail
     session = smtplib.SMTP('smtp.gmail.com', 587) #use gmail with port
     session.starttls() #enable security
