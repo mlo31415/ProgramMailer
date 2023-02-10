@@ -6,7 +6,7 @@ import os
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from HelpersPackage import FindAnyBracketedText, MessageLog, ReadListAsParmDict
+from HelpersPackage import FindAnyBracketedText, FindBracketedText, MessageLog, ReadListAsParmDict
 
 
 # Search for a Program file and return its path.
@@ -48,28 +48,32 @@ def main():
         MessageLog(f"Can't find MailFormat value in parameters.txt\nProgramMailer terminated.")
         exit(999)
 
-    while len(allEmails) > 0:
-        _, tag, content, remainder=FindAnyBracketedText(allEmails)
-        if tag != "email-message":
-            MessageLog(f"Top level tag<{tag}> encountered -- <email> expected.\nProgramMailer ended.")
-            return
-        allEmails=remainder.strip()
-
+    while len(allEmails.strip()) > 0:
         # Get the email address and message
-        _, tag1, emailaddress, remainder=FindAnyBracketedText(content)
-        if tag1 != "email-address":
-            MessageLog(f"Top level tag<{tag}> encountered -- <email-address> expected.\nProgramMailer ended.")
+        message, allEmails=FindBracketedText(allEmails, "email-message", stripHtml=False)
+        if len(message) == 0:
+            MessageLog(f"Tag <email-message> expected and not found.\nProgramMailer ended.")
             return
-        _, tag2, message, _=FindAnyBracketedText(remainder)
-        if tag2 != "content":
-            MessageLog(f"Top level tag<{tag}> encountered -- <content> expected.\nProgramMailer ended.")
+
+        address, message=FindBracketedText(message, "email-address", stripHtml=False)
+        if len(message) == 0:
+            MessageLog(f"Tag <email-address> expected and not found.\nProgramMailer ended.")
             return
-        _, tag3, subject, body=FindAnyBracketedText(message)
-        if tag3 != "email subject":
-            MessageLog(f"email subject tag<{tag}> missing from <email message>.\nProgramMailer ended.")
+        content, message=FindBracketedText(message, "content", stripHtml=False)
+        if len(message) == 0:
+            MessageLog(f"Tag <content> expected and not found.\nProgramMailer ended.")
             return
+        subject, content=FindBracketedText(content, "email-subject", stripHtml=False)
+        if len(message) == 0:
+            MessageLog(f"Tag <email-subject> expected and not found.\nProgramMailer ended.")
+            return
+        subject, content=FindBracketedText(content, "email-subject", stripHtml=False)
+        if len(message) == 0:
+            MessageLog(f"Tag <email-subject> expected and not found.\nProgramMailer ended.")
+            return
+
         # sender_pass='moqwjlrbhoisqvkc'  # 'Prog3Analyzer'
-        Mail(returnAddress, 'programtest2022@gmail.com', 'moqwjlrbhoisqvkc', mailFormat, emailaddress, subject, body)
+        Mail(returnAddress, 'programtest2022@gmail.com', 'moqwjlrbhoisqvkc', mailFormat, address, subject, content)
 
 
 def Mail(returnAddress: str, senderAddress: str, password: str, mailFormat: str, recipient: str, subject: str, content: str) -> None:
