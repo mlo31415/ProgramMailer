@@ -7,6 +7,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from HelpersPackage import FindBracketedText, MessageLog, ReadListAsParmDict
+from Log import Log, LogError
 
 
 # Search for a Program file and return its path.
@@ -90,8 +91,14 @@ def Mail(returnAddress: str, senderAddress: str, password: str, mailFormat: str,
     session.starttls() #enable security
     session.login(senderAddress, password) #login with mail_id and password
     text = message.as_string()
-    session.sendmail(senderAddress, recipient, text)
+    sendErrors=session.sendmail(senderAddress, recipient, text)
     session.quit()
+
+    if len(sendErrors) == 0:
+        Log(f"Emailed: {recipient} at {senderAddress}")
+    else:
+        LogError(f"Email to {recipient} at {senderAddress} returned errors and probably failed")
+
 
 def OpenProgramFile(fname: str, path: str, defaultDir: str, report=True) -> Optional[str]:
     if fname is None:
