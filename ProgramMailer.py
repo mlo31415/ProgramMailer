@@ -19,6 +19,11 @@ def main():
         MessageLog(f"Can't open/read {os.getcwd()}/parameters.txt\nProgramMailer terminated.")
         exit(999)
 
+    credentials=ReadListAsParmDict("Credentials.txt")
+    if credentials is None or len(credentials) == 0:
+        MessageLog(f"Can't open/read {os.getcwd()}/Credentials.txt\nProgramMailer terminated.")
+        exit(999)
+
     # Open the mail file which was created using ProgramMailerAssembler
     allemailsPath=OpenProgramFile("Program participant schedules email.txt", parameters["PMADirectory"], ".")
     if not allemailsPath:
@@ -49,6 +54,9 @@ def main():
         MessageLog(f"Can't find MailFormat value in parameters.txt\nProgramMailer terminated.")
         exit(999)
 
+    address=credentials["address"]
+    pw=credentials["password"]
+
     while len(allEmails.strip()) > 0:
         # Get the email address and message
         emailmessage, allEmails=FindBracketedText(allEmails, "email-message", stripHtml=False, stripWhitespace=True)
@@ -70,7 +78,7 @@ def main():
             return
 
         # sender_pass='moqwjlrbhoisqvkc'  # 'Prog3Analyzer'
-        Mail(returnAddress, 'programtest2022@gmail.com', 'moqwjlrbhoisqvkc', mailFormat, emailaddress, emailsubject, content)
+        Mail(returnAddress, address, pw, mailFormat, emailaddress, emailsubject, content)
 
 
 def Mail(returnAddress: str, senderAddress: str, password: str, mailFormat: str, recipient: str, subject: str, content: str) -> None:
