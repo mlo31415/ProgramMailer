@@ -32,6 +32,20 @@ def main():
     with open(allemailsPath, "r") as file:
         allEmails=file.read()
 
+    # Strip any leading lines which start with "#" and end \n or which are empty
+    lines=allEmails.split("\n")
+    allEmails=""
+    starting=True
+    for line in lines:
+        if starting:
+            if len(line) == 0:
+                continue
+            if line[0] == "#":
+                continue
+        starting=False
+        allEmails+=line+"\n"
+
+
     # This file contains one or more emails.
     # An individual email's structure is:
     #   <email>
