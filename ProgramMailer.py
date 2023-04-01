@@ -57,6 +57,8 @@ def main():
     address=credentials["address"]
     pw=credentials["password"]
 
+    numMessagesSent=0
+    numMessagesFailed=0
     while len(allEmails.strip()) > 0:
         # Get the email address and message
         emailmessage, allEmails=FindBracketedText(allEmails, "email-message", stripHtml=False, stripWhitespace=True)
@@ -77,11 +79,18 @@ def main():
             MessageLog(f"Tag <email-subject> expected and not found.\nProgramMailer ended.")
             return
 
-        # sender_pass='moqwjlrbhoisqvkc'  # 'Prog3Analyzer'
-        Mail(returnAddress, address, pw, mailFormat, emailaddress, emailsubject, content)
+        if Mail(returnAddress, address, pw, mailFormat, emailaddress, emailsubject, content):
+            numMessagesSent+=1
+        else:
+            numMessagesFailed+=1
+
+    Log(f"\n{numMessagesSent} messages sent.")
+    if numMessagesFailed > 0:
+        Log(f"\n{numMessagesFailed} messages failed.")
 
 
-def Mail(returnAddress: str, senderAddress: str, password: str, mailFormat: str, recipient: str, subject: str, content: str) -> None:
+
+def Mail(returnAddress: str, senderAddress: str, password: str, mailFormat: str, recipient: str, subject: str, content: str) -> bool:
     #Setup the MIME
     message = MIMEMultipart()
     message['From'] = returnAddress
@@ -102,10 +111,12 @@ def Mail(returnAddress: str, senderAddress: str, password: str, mailFormat: str,
     sendErrors=session.sendmail(senderAddress, recipient, text)
     session.quit()
 
-    if len(sendErrors) == 0:
-        Log(f"Emailed: {recipient} at {senderAddress}")
-    else:
+    if len(sendErrors) > 0:
         LogError(f"Email to {recipient} at {senderAddress} returned errors and probably failed")
+        return False
+
+    Log(f"Emailed: {recipient} at {senderAddress}")
+    return True
 
 
 def OpenProgramFile(fname: str, path: str, defaultDir: str, report=True) -> Optional[str]:
