@@ -74,24 +74,25 @@ def main():
     numMessagesSent=0
     numMessagesFailed=0
     while len(allEmails.strip()) > 0:
+
         # Get the email address and message
         emailmessage, allEmails=FindBracketedText(allEmails, "email-message", stripHtml=False, stripWhitespace=True)
         if len(emailmessage) == 0:
-            MessageLog(f"Tag <email-message> expected and not found.\nProgramMailer ended.")
-            return
+            MessageLog(f"Tag <email-message> expected and not found.")
+            break
 
         emailaddress, emailmessage=FindBracketedText(emailmessage, "email-address", stripHtml=False, stripWhitespace=True)
         if len(emailaddress) == 0:
             MessageLog(f"Tag <email-address> expected and not found.\nProgramMailer ended.")
-            return
+            break
         content, emailmessage=FindBracketedText(emailmessage, "content", stripHtml=False, stripWhitespace=True)
         if len(content) == 0:
             MessageLog(f"Tag <content> expected and not found.\nProgramMailer ended.")
-            return
+            break
         emailsubject, content=FindBracketedText(content, "email subject", stripHtml=False, stripWhitespace=True)
         if len(emailsubject) == 0:
             MessageLog(f"Tag <email-subject> expected and not found.\nProgramMailer ended.")
-            return
+            break
 
         if Mail(returnAddress, address, pw, mailFormat, emailaddress, emailsubject, content):
             numMessagesSent+=1
@@ -105,7 +106,7 @@ def main():
 
 
 def Mail(returnAddress: str, senderAddress: str, password: str, mailFormat: str, recipient: str, subject: str, content: str) -> bool:
-    #Setup the MIME
+    # Set up the MIME
     message = MIMEMultipart()
     message['From'] = returnAddress
     message['To'] = recipient
