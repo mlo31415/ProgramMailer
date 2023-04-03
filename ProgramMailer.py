@@ -65,7 +65,7 @@ def main():
             if default is not None:
                 val=default
             else:
-                MessageLog(f"Can't find {name} value in {parameters['_filename']}\nProgramMailer terminated.")
+                MessageLog(f"Can't find {name} value in {parameters.SourceFilename}\nProgramMailer terminated.")
                 exit(999)
         return val
 
