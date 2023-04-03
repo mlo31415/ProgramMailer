@@ -105,11 +105,11 @@ def main():
 
 
 
-def Mail(returnAddress: str, senderAddress: str, password: str, mailFormat: str, recipient: str, subject: str, content: str) -> bool:
+def Mail(returnAddress: str, senderAddress: str, password: str, mailFormat: str, recipientAddr: str, subject: str, content: str) -> bool:
     # Set up the MIME
     message = MIMEMultipart()
     message['From'] = returnAddress
-    message['To'] = recipient
+    message['To'] = recipientAddr
     message['Subject'] = subject
     #The body and the attachments for the mail
 
@@ -123,14 +123,14 @@ def Mail(returnAddress: str, senderAddress: str, password: str, mailFormat: str,
     session.starttls() #enable security
     session.login(senderAddress, password) #login with mail_id and password
     text = message.as_string()
-    sendErrors=session.sendmail(senderAddress, recipient, text)
+    sendErrors=session.sendmail(senderAddress, recipientAddr, text)
     session.quit()
 
     if len(sendErrors) > 0:
-        LogError(f"Email to {recipient} at {senderAddress} returned errors and probably failed")
+        LogError(f"Email to {recipientAddr} returned errors and probably failed")
         return False
 
-    Log(f"Emailed: {recipient} at {senderAddress}")
+    Log(f"Emailed: {recipientAddr}")
     return True
 
 
