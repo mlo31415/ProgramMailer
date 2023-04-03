@@ -59,17 +59,22 @@ def main():
     # Newlines within the content are preserved
     # Lines beginning with "#" *outside* of the <email> blocks are ignored
 
-    returnAddress=parameters["ReturnAddress"]
-    if not returnAddress:
-        MessageLog(f"Can't find ReturnAddress value in parameters.txt\nProgramMailer terminated.")
-        exit(999)
-    mailFormat=parameters["MailFormat"]
-    if not mailFormat:
-        MessageLog(f"Can't find MailFormat value in parameters.txt\nProgramMailer terminated.")
-        exit(999)
+    def GetParm(parameters, name: str, default: str=None) -> str:
+        val=parameters[name]
+        if not val:
+            if default is not None:
+                val=default
+            else:
+                MessageLog(f"Can't find {name} value in {parameters['_filename']}\nProgramMailer terminated.")
+                exit(999)
+        return val
 
-    address=credentials["address"]
-    pw=credentials["password"]
+    returnAddress=GetParm(parameters, "ReturnAddress")
+    mailFormat=GetParm(parameters, "MailFormat", "HTML")
+    senderName=GetParm(parameters, "SenderName", "George")
+
+    address=GetParm(credentials, "address")
+    pw=GetParm(credentials, "password")
 
     numMessagesSent=0
     numMessagesFailed=0
@@ -94,7 +99,7 @@ def main():
             MessageLog(f"Tag <email-subject> expected and not found.\nProgramMailer ended.")
             break
 
-        if Mail(returnAddress, address, pw, mailFormat, emailaddress, emailsubject, content):
+        if Mail(senderName, address, pw, mailFormat, returnAddress, emailaddress, emailsubject, content):
             numMessagesSent+=1
         else:
             numMessagesFailed+=1
@@ -103,14 +108,15 @@ def main():
     if numMessagesFailed > 0:
         Log(f"\n{numMessagesFailed} messages failed.")
 
+6
 
-
-def Mail(returnAddress: str, senderAddress: str, password: str, mailFormat: str, recipientAddr: str, subject: str, content: str) -> bool:
+def Mail(senderName: str, senderAddress: str, password: str, mailFormat: str, returnAddr: str, recipientAddr: str, subject: str, content: str) -> bool:
     # Set up the MIME
     message = MIMEMultipart()
-    message['From'] = returnAddress
+    message['From'] = senderName
     message['To'] = recipientAddr
     message['Subject'] = subject
+    message.add_header('reply-to', returnAddr)
     #The body and the attachments for the mail
 
     if mailFormat.lower().strip() == "html":
