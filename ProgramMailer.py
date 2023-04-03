@@ -6,7 +6,7 @@ import os
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from HelpersPackage import FindBracketedText, MessageLog, ReadListAsParmDict
+from HelpersPackage import FindBracketedText, MessageLog, ReadListAsParmDict, GetParmFromParmDict
 from Log import Log, LogError
 
 
@@ -59,22 +59,12 @@ def main():
     # Newlines within the content are preserved
     # Lines beginning with "#" *outside* of the <email> blocks are ignored
 
-    def GetParm(parameters, name: str, default: str=None) -> str:
-        val=parameters[name]
-        if not val:
-            if default is not None:
-                val=default
-            else:
-                MessageLog(f"Can't find {name} value in {parameters.SourceFilename}\nProgramMailer terminated.")
-                exit(999)
-        return val
+    returnAddress=GetParmFromParmDict(parameters, "ReturnAddress")
+    mailFormat=GetParmFromParmDict(parameters, "MailFormat", "HTML")
+    senderName=GetParmFromParmDict(parameters, "SenderName", "George")
 
-    returnAddress=GetParm(parameters, "ReturnAddress")
-    mailFormat=GetParm(parameters, "MailFormat", "HTML")
-    senderName=GetParm(parameters, "SenderName", "George")
-
-    address=GetParm(credentials, "address")
-    pw=GetParm(credentials, "password")
+    address=GetParmFromParmDict(credentials, "address")
+    pw=GetParmFromParmDict(credentials, "password")
 
     numMessagesSent=0
     numMessagesFailed=0
@@ -108,7 +98,6 @@ def main():
     if numMessagesFailed > 0:
         Log(f"\n{numMessagesFailed} messages failed.")
 
-6
 
 def Mail(senderName: str, senderAddress: str, password: str, mailFormat: str, returnAddr: str, recipientAddr: str, subject: str, content: str) -> bool:
     # Set up the MIME
