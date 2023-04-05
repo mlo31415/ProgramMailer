@@ -19,9 +19,10 @@ def main():
         MessageLog(f"Can't open/read {os.getcwd()}/parameters.txt\nProgramMailer terminated.")
         exit(999)
 
-    credentials=ReadListAsParmDict("Credentials.txt")
+    credfilename=GetParmFromParmDict(parameters, "Mailing Credentials", "Credentials.txt")
+    credentials=ReadListAsParmDict(credfilename)
     if credentials is None or len(credentials) == 0:
-        MessageLog(f"Can't open/read {os.getcwd()}/Credentials.txt\nProgramMailer terminated.")
+        MessageLog(f"Can't open or can't read {os.getcwd()}/{credfilename}\nProgramMailer terminated.")
         exit(999)
 
     # Open the mail file which was created using ProgramMailerAssembler
