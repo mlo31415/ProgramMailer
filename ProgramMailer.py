@@ -26,8 +26,8 @@ def main():
         exit(999)
 
     # Open the mail file which was created using ProgramMailerAssembler
-    allemailsPath=OpenProgramFile("Program participant schedules email.txt", parameters["PMADirectory"], ".")
-    if not allemailsPath:
+    allemailsPath=OpenProgramFile("Program participant schedules email.txt", GetParmFromParmDict(parameters, "PMADirectory", "."))
+    if not allemailsPath:   #TODO: is this really needed?  It looks like OpenProgramFile() does this for us
         MessageLog(f"Can't find 'Program participant schedules email.txt'\nProgramMailer terminated.")
         exit(999)
     with open(allemailsPath, "r") as file:
@@ -119,7 +119,11 @@ def Mail(senderName: str, senderAddress: str, password: str, mailFormat: str, re
     session.starttls() #enable security
     session.login(senderAddress, password) #login with mail_id and password
     text = message.as_string()
-    sendErrors=session.sendmail(senderAddress, recipientAddr, text)
+    try:
+        sendErrors=session.sendmail(senderAddress, recipientAddr, text)
+    except smtplib.SMTPRecipientsRefused:
+        LogError(f"Email to {recipientAddr} returned SMTPRecipientsRefused and failed")
+        return False
     session.quit()
 
     if len(sendErrors) > 0:
@@ -130,7 +134,7 @@ def Mail(senderName: str, senderAddress: str, password: str, mailFormat: str, re
     return True
 
 
-def OpenProgramFile(fname: str, path: str, defaultDir: str, report=True) -> Optional[str]:
+def OpenProgramFile(fname: str, path: str, defaultDir: str="", report=True) -> Optional[str]:
     if fname is None:
         MessageLog(f"OpenProgramFile: fname is None, {path=}")
         return None
